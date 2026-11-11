@@ -42,7 +42,16 @@ jobs:
       - name: Apply CASH PC app branding
         working-directory: upstream-winlator/app
         run: |
-          sed -i 's/<string name="app_name">Winlator<\\/string>/<string name="app_name">CASH PC<\\/string>/' app/src/main/res/values/strings.xml
+          python3 - <<'PY'
+          from pathlib import Path
+          strings = Path("app/src/main/res/values/strings.xml")
+          content = strings.read_text(encoding="utf-8")
+          old = '<string name="app_name">Winlator</string>'
+          new = '<string name="app_name">CASH PC</string>'
+          if old not in content:
+              raise SystemExit("Expected Winlator app_name string was not found")
+          strings.write_text(content.replace(old, new, 1), encoding="utf-8")
+          PY
 
       - name: Build Android APK
         working-directory: upstream-winlator/app
