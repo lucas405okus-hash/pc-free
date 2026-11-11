@@ -83,16 +83,16 @@ jobs:
                   j_open, j_close = jni
                   absolute_close = p_open + j_close
                   if "libfluidsynth-assetloader.so" not in build:
-                      build = build[:absolute_close] + "\\n            pickFirsts += " + libs + "\\n        " + build[absolute_close:]
+                      build = build[:absolute_close] + "\n            pickFirsts += " + libs + "\n        " + build[absolute_close:]
               else:
                   if "libfluidsynth-assetloader.so" not in build:
-                      build = build[:p_close] + "\\n        jniLibs {\\n            pickFirsts += " + libs + "\\n        }\\n    " + build[p_close:]
+                      build = build[:p_close] + "\n        jniLibs {\n            pickFirsts += " + libs + "\n        }\n    " + build[p_close:]
           else:
               android = find_block(build, r"android\s*\{")
               if not android:
                   raise SystemExit("Could not locate Android Gradle configuration")
               a_open, _ = android
-              build = build[:a_open + 1] + "\\n    packagingOptions {\\n        jniLibs {\\n            pickFirsts += " + libs + "\\n        }\\n    }" + build[a_open + 1:]
+              build = build[:a_open + 1] + "\n    packagingOptions {\n        jniLibs {\n            pickFirsts += " + libs + "\n        }\n    }" + build[a_open + 1:]
 
           gradle.write_text(build, encoding="utf-8")
           PY
