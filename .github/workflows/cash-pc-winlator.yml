@@ -75,10 +75,10 @@ jobs:
                           return opening, pos
               raise SystemExit("Unbalanced Gradle block: " + pattern)
 
-          package = find_block(build, r"packagingOptions\\s*\\{")
+          package = find_block(build, r"packagingOptions\s*\{")
           if package:
               p_open, p_close = package
-              jni = find_block(build[p_open:p_close + 1], r"jniLibs\\s*\\{")
+              jni = find_block(build[p_open:p_close + 1], r"jniLibs\s*\{")
               if jni:
                   j_open, j_close = jni
                   absolute_close = p_open + j_close
@@ -88,7 +88,7 @@ jobs:
                   if "libfluidsynth-assetloader.so" not in build:
                       build = build[:p_close] + "\\n        jniLibs {\\n            pickFirsts += " + libs + "\\n        }\\n    " + build[p_close:]
           else:
-              android = find_block(build, r"android\\s*\\{")
+              android = find_block(build, r"android\s*\{")
               if not android:
                   raise SystemExit("Could not locate Android Gradle configuration")
               a_open, _ = android
