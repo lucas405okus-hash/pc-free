@@ -31,16 +31,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
 
-      - name: Install native build toolchains
+      - name: Install Android SDK and native build toolchains
         run: |
-          sdkmanager "ndk;24.0.8215888" "cmake;3.22.1"
           yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;24.0.8215888" "cmake;3.22.1"
 
       - name: Apply CASH PC app branding
         working-directory: upstream-winlator/app
