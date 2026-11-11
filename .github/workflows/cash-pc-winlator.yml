@@ -39,7 +39,7 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;24.0.8215888" "cmake;3.22.1"
 
-      - name: Apply CASH PC app branding and native packaging fix
+      - name: Apply CASH PC app branding and native packaging fixes
         working-directory: upstream-winlator/app
         run: |
           python3 - <<'PY'
@@ -54,17 +54,13 @@ jobs:
 
           gradle = Path("app/build.gradle")
           build = gradle.read_text(encoding="utf-8")
-          if "pickFirsts" not in build:
-              insertion = """android {
-              packagingOptions {
-                  jniLibs {
-                      pickFirsts += ['lib/arm64-v8a/libFLAC.so']
-                  }
-              }"""
-              if "android {" not in build:
-                  raise SystemExit("Could not locate Android Gradle configuration")
-              build = build.replace("android {", insertion, 1)
-              gradle.write_text(build, encoding="utf-8")
+          old = "pickFirsts += ['lib/arm64-v8a/libFLAC.so']"
+          new = "pickFirsts += ['lib/arm64-v8a/libFLAC.so', 'lib/arm64-v8a/libfluidsynth-assetloader.so']"
+          if old in build:
+              build = build.replace(old, new, 1)
+          elif "lib/arm64-v8a/libfluidsynth-assetloader.so" not in build:
+              raise SystemExit("Could not find the existing native packaging rule to extend")
+          gradle.write_text(build, encoding="utf-8")
           PY
 
       - name: Build Android APK
