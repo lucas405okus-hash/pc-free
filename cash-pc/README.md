@@ -1,25 +1,30 @@
-# CASH PC — Android prototype
+# CASH PC — Android (base Winlator)
 
-This is the first Android application scaffold for the CASH PC project.
+## Direção do projeto
+CASH PC passa a usar o projeto aberto Winlator como base de compatibilidade Windows no Android, em vez de tentar implementar QEMU/uma máquina virtual Windows completa.
 
-## Current status
-- Native Android app shell (Kotlin).
-- Android Storage Access Framework ISO/image picker; no broad storage permission.
-- Basic VM status screen.
-- **QEMU is not integrated yet. This APK does not boot Windows or ReactOS.** The start button intentionally reports that limitation rather than pretending a VM started.
+O Winlator executa aplicativos Windows x86/x64 por meio de Wine e Box86/Box64. **Ele não inicializa uma instalação completa do Windows por ISO.**
 
-## Build
-Open `cash-pc` in Android Studio with JDK 17 and Android SDK 35, or run `gradle assembleDebug` from this directory using Gradle 8.9+.
+## Integração em andamento
+- Workflow `.github/workflows/cash-pc-winlator.yml` clona o repositório oficial Winlator com seus submódulos.
+- Compila o app Android upstream usando JDK 17, Android NDK 24 e CMake 3.22.1.
+- Ajusta o nome exibido do aplicativo para CASH PC.
+- Publica o APK debug como artefato `CASH-PC-Winlator-Android-debug`.
 
-## Planned engineering stages
-1. Build and install the Android shell on ARM64.
-2. Integrate a maintained QEMU Android build or build QEMU from source for `arm64-v8a`.
-3. Add aarch64 guest first for performance testing; x86/x86_64 guests require CPU emulation and may be very slow.
-4. Add disk image creation, boot configuration, touch mouse, keyboard, and VM lifecycle handling.
-5. Test ReactOS first. Windows installation media must be obtained lawfully by the user; this app does not bundle Windows.
+O APK só deve ser considerado pronto depois que o GitHub Actions terminar com sucesso e o artefato for testado em um aparelho real.
 
-## Important compatibility note
-The target phone uses an ARM64 SoC. Running an x86 Windows guest requires instruction translation and is not equivalent to native Windows. Roblox Studio performance and compatibility are not guaranteed.
+## Chrome
+O próximo passo de produto é oferecer instalação guiada do Google Chrome dentro de um container Winlator. O instalador deve ser obtido de fonte oficial do Google; não será embutida uma cópia modificada ou não autorizada do navegador. A compilação inicial desta integração **ainda não pré-instala o Chrome**.
 
-## Licensing
-The Android shell in this directory is original project code. QEMU and any future third-party components must retain their respective licenses and notices. No Microsoft Windows binaries are included.
+## Compatibilidade
+- Projetado para Android ARM64.
+- Aplicativos Windows x86/x64 dependem de tradução/emulação e podem ter desempenho ou compatibilidade variáveis.
+- Não é Windows completo; não promete executar todos os programas.
+- O Chrome para Windows pode funcionar no Wine/Box64, mas isso precisa ser validado no aparelho alvo.
+
+## Licenças e atribuições
+O Winlator e seus componentes têm licenças próprias. Esta integração mantém os avisos e créditos upstream e não remove as licenças dos componentes. Consulte os repositórios oficiais:
+- https://github.com/brunodev85/winlator
+- https://github.com/brunodev85/winlator-app
+
+O CASH PC não inclui mídia do Microsoft Windows nem redistribui instaladores proprietários do Google.
