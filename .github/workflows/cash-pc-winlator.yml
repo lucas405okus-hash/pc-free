@@ -44,22 +44,56 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           strings = Path("app/src/main/res/values/strings.xml")
           content = strings.read_text(encoding="utf-8")
           original = '<string name="app_name">Winlator</string>'
-          if content.count(original) != 1:
-              raise SystemExit("Expected app_name string was not found exactly once")
-          strings.write_text(content.replace(original, '<string name="app_name">CASH PC</string>', 1), encoding="utf-8")
+          branded = '<string name="app_name">CASH PC</string>'
+          if branded not in content:
+              if content.count(original) != 1:
+                  raise SystemExit("Could not safely locate the application name")
+              content = content.replace(original, branded, 1)
+              strings.write_text(content, encoding="utf-8")
 
           gradle = Path("app/build.gradle")
           build = gradle.read_text(encoding="utf-8")
-          old = "pickFirsts += ['lib/arm64-v8a/libFLAC.so']"
-          new = "pickFirsts += ['lib/arm64-v8a/libFLAC.so', 'lib/arm64-v8a/libfluidsynth-assetloader.so']"
-          if old in build:
-              build = build.replace(old, new, 1)
-          elif "lib/arm64-v8a/libfluidsynth-assetloader.so" not in build:
-              raise SystemExit("Could not find the existing native packaging rule to extend")
+          libs = "['lib/arm64-v8a/libFLAC.so', 'lib/arm64-v8a/libfluidsynth-assetloader.so']"
+
+          def find_block(text, pattern):
+              match = re.search(pattern, text)
+              if not match:
+                  return None
+              opening = text.find("{", match.start())
+              depth = 0
+              for pos in range(opening, len(text)):
+                  if text[pos] == "{":
+                      depth += 1
+                  elif text[pos] == "}":
+                      depth -= 1
+                      if depth == 0:
+                          return opening, pos
+              raise SystemExit("Unbalanced Gradle block: " + pattern)
+
+          package = find_block(build, r"packagingOptions\\s*\\{")
+          if package:
+              p_open, p_close = package
+              jni = find_block(build[p_open:p_close + 1], r"jniLibs\\s*\\{")
+              if jni:
+                  j_open, j_close = jni
+                  absolute_close = p_open + j_close
+                  if "libfluidsynth-assetloader.so" not in build:
+                      build = build[:absolute_close] + "\\n            pickFirsts += " + libs + "\\n        " + build[absolute_close:]
+              else:
+                  if "libfluidsynth-assetloader.so" not in build:
+                      build = build[:p_close] + "\\n        jniLibs {\\n            pickFirsts += " + libs + "\\n        }\\n    " + build[p_close:]
+          else:
+              android = find_block(build, r"android\\s*\\{")
+              if not android:
+                  raise SystemExit("Could not locate Android Gradle configuration")
+              a_open, _ = android
+              build = build[:a_open + 1] + "\\n    packagingOptions {\\n        jniLibs {\\n            pickFirsts += " + libs + "\\n        }\\n    }" + build[a_open + 1:]
+
           gradle.write_text(build, encoding="utf-8")
           PY
 
