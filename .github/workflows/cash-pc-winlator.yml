@@ -29,9 +29,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK and native build toolchains
         run: |
           yes | sdkmanager --licenses
@@ -40,7 +37,7 @@ jobs:
       - name: Apply CASH PC app branding
         working-directory: upstream-winlator/app
         run: |
-          sed -i 's/<string name="app_name">Winlator<\/string>/<string name="app_name">CASH PC<\/string>/' app/src/main/res/values/strings.xml
+          sed -i 's/<string name="app_name">Winlator<\\/string>/<string name="app_name">CASH PC<\\/string>/' app/src/main/res/values/strings.xml
 
       - name: Build Android APK
         working-directory: upstream-winlator/app
