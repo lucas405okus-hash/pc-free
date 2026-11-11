@@ -39,18 +39,23 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;24.0.8215888" "cmake;3.22.1"
 
-      - name: Apply CASH PC app branding
+      - name: Apply CASH PC app branding and native packaging fix
         working-directory: upstream-winlator/app
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           strings = Path("app/src/main/res/values/strings.xml")
           content = strings.read_text(encoding="utf-8")
-          old = '<string name="app_name">Winlator</string>'
-          new = '<string name="app_name">CASH PC</string>'
-          if old not in content:
-              raise SystemExit("Expected Winlator app_name string was not found")
-          strings.write_text(content.replace(old, new, 1), encoding="utf-8")
+          updated, count = re.subn(r'(<string\\s+name="app_name"[^>]*>).*?(</string>)', r'\\1CASH PC\\2', content, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit("Could not locate app_name in strings.xml")
+          strings.write_text(updated, encoding="utf-8")
+          gradle = Path("app/build.gradle")
+          build = gradle.read_text(encoding="utf-8")
+          if "pickFirsts" not in build:
+              build = build.replace("android {", "android {\\n    packagingOptions {\\n        jniLibs {\\n            pickFirsts += ['lib/arm64-v8a/libFLAC.so']\\n        }\\n    }", 1)
+          gradle.write_text(build, encoding="utf-8")
           PY
 
       - name: Build Android APK
