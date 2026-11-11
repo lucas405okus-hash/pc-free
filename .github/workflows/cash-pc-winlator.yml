@@ -1,0 +1,57 @@
+name: CASH PC - Winlator Android
+
+on:
+  push:
+    branches:
+      - cash-pc/winlator-integration
+    paths:
+      - '.github/workflows/cash-pc-winlator.yml'
+      - 'cash-pc/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout CASH PC integration
+        uses: actions/checkout@v4
+
+      - name: Checkout Winlator and required submodules
+        run: |
+          git clone --recurse-submodules --depth 1 https://github.com/brunodev85/winlator.git upstream-winlator
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install native build toolchains
+        run: |
+          sdkmanager "ndk;24.0.8215888" "cmake;3.22.1"
+          yes | sdkmanager --licenses
+
+      - name: Apply CASH PC app branding
+        working-directory: upstream-winlator/app
+        run: |
+          sed -i 's/<string name="app_name">Winlator<\/string>/<string name="app_name">CASH PC<\/string>/' app/src/main/res/values/strings.xml
+
+      - name: Build Android APK
+        working-directory: upstream-winlator/app
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Publish APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CASH-PC-Winlator-Android-debug
+          path: upstream-winlator/app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
